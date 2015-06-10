@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conf=~/.db.confa
+conf=~/.db.conf
 if [ ! -f $conf ];then
 	echo "$conf 不存在"
 	exit 0
