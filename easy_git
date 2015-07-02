@@ -11,6 +11,7 @@
 # Abort on any errors
 set -e -u
 
+# 操作
 action=${1:-'help'}
 
 # colors
@@ -35,17 +36,50 @@ function update
 }
 
 # 提交文件
-function commit
+function checkCommit
 {
-	params=$(echo "$*"|sed s/\"/\\\"/g)
-	exec git commit "$params"
-	exec git push origin dev
+	info=$(commitMsg "$@")
+	if [ "$info" = "" ];then
+		printf "$RED"
+		echo "请填写提交描述~"
+		printf "$OFF"
+		exit
+	elif echo $info| grep '#[0-9]\{1,9\}' > /dev/null; then
+		return
+	else
+		printf "$RED"
+		echo "提交描述里要保含分支号哦~"
+		printf "$OFF"
+		exit
+	fi
 }
 
+# 提交内容
+function commitMsg
+{
+	if [ "$#" = "0" ];then
+		return
+	fi
+	param=''
+	while true
+	do
+		if [ "$1" = "-m" ];then
+			param="$2"
+			break;
+		fi
+		shift
+		if [ "$#" = "0" ];then
+			break
+		fi
+	done
+	echo $param
+}
+
+# 执行命令
 function exec
 {
-	echo "$*"
-	$*
+	echo "$@"
+	$@
 }
 
 # 还原版本
@@ -83,7 +117,7 @@ function reset
 # 查看历史
 function log
 {
-	params=$(echo "$*"|sed s/\"/\\\"/g)
+	params=$(echo "$@"|sed s/\"/\\\"/g)
 	exec git log --graph --pretty=format:"'%Cred%h%Creset%C(yellow)%d%Creset%nAuthor:%cn<%ce>%nDate:%cd%Cblue(%cr)%Creset%n%nSubject:%Cgreen%s%Creset%n'" --name-status "$params"
 }
 
@@ -104,30 +138,42 @@ function checkout
 			exec git checkout $1
 		fi
 	else
-		params=$(echo "$*"|sed s/\"/\\\"/g)
+		params=$(echo "$@"|sed s/\"/\\\"/g)
 		exec git checkout "$params"
 	fi
 }
 
+# 重构参数
+params=''
+if [ "$#" != "0" ];then
+	shift
+	for i in "$@";do
+		tmp=$(echo "$i"|sed s/\"/\\\\\"/g)
+		params=$params" \"$tmp\""
+	done
+fi
 case $action in
 	update)
 		update
 		;;
 	commit)
 		update
-		shift
-		commit "$@"
+		cmd=$(echo checkCommit $params)
+		eval $cmd
+		cmd=$(echo git commit $params)
+		eval $cmd
+		exec git push origin dev
 		;;
 	reset)
 		reset
 		;;
 	checkout)
-		shift
-		checkout "$@"
+		cmd=$(echo checkout $params)
+		eval $cmd
 		;;
 	log)
-		shift
-		log "$@"
+		cmd=$(echo log $params)
+		eval $cmd
 		;;
 	help)
 		echo "Usage: $0 {update|commit|reset|checkout|log}"
@@ -144,5 +190,5 @@ case $action in
 		git help
 		exit 1;;
 	*)
-		git "$@"
+		git $action "$@"
 esac
