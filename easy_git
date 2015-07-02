@@ -5,7 +5,7 @@
 # authors	: liminggui
 # date		: 07.01.2015
 # license	: GPLv2
-# usage		: run ./easy_git.sh
+# usage		: run ./easy_git
 ##############################################################
 
 # Abort on any errors
