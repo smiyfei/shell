@@ -1,0 +1,148 @@
+#!/bin/bash
+
+##############################################################
+# title		: git 简化操作工具
+# authors	: liminggui
+# date		: 07.01.2015
+# license	: GPLv2
+# usage		: run ./easy_git.sh
+##############################################################
+
+# Abort on any errors
+set -e -u
+
+action=${1:-'help'}
+
+# colors
+unset OFF GREEN RED
+OFF='\e[1;0m'
+GREEN='\e[1;32m'
+RED='\e[1;31m'
+readonly OFF GREEN RED
+
+# 更新文件
+function update
+{
+	stash=$(git status -s |wc -l)
+	if [ "$stash" != "0" ]; then
+		exec git stash
+	fi
+	exec git fetch origin dev
+	exec git rebase origin/dev
+	if [ "$stash" != "0" ];then
+		exec git stash pop
+	fi
+}
+
+# 提交文件
+function commit
+{
+	params=$(echo "$*"|sed s/\"/\\\"/g)
+	exec git commit "$params"
+	exec git push origin dev
+}
+
+function exec
+{
+	echo "$*"
+	$*
+}
+
+# 还原版本
+function reset
+{
+	echo "以下为最近10次提交历史"
+	git log -n 10 --pretty=format:"%h \"%s\"(%cn)" | while read line
+	do
+		echo $line
+	done
+	read -p "请输入要还原到哪次提交(第一列): " comId
+	realComId=''
+	for line in $(git log -n 10 --pretty=format:"%h")
+	do
+		if [ "$line" = "$comId" ];then
+			realComId=$line
+			break
+		fi
+	done
+	if [ "$realComId" = "" ]; then
+		printf "$RED"
+		echo "没有找到对应的提交ID，请重新选择"
+		printf "$OFF"
+		reset
+	else
+		read -p "要保留最新的文件内容吗？(Y): " file
+		if [ "$file" = "Y" -o "$file" = "y" ];then
+			exec git reset $realComId
+		else
+			exec git reset --hard $realComId
+		fi
+	fi
+}
+
+# 查看历史
+function log
+{
+	params=$(echo "$*"|sed s/\"/\\\"/g)
+	exec git log --graph --pretty=format:"'%Cred%h%Creset%C(yellow)%d%Creset%nAuthor:%cn<%ce>%nDate:%cd%Cblue(%cr)%Creset%n%nSubject:%Cgreen%s%Creset%n'" --name-status "$params"
+}
+
+# 切换分支
+function checkout
+{
+	if [ "$#" = "1" -a "$1" != "--" ];then
+		new="1"
+		for line in $(git branch)
+		do
+			if [ "$line" = "$1" ];then
+				new="0"
+			fi
+		done
+		if [ "$new" = "1" ];then
+			exec git checkout -b $1 origin/dev
+		else
+			exec git checkout $1
+		fi
+	else
+		params=$(echo "$*"|sed s/\"/\\\"/g)
+		exec git checkout "$params"
+	fi
+}
+
+case $action in
+	update)
+		update
+		;;
+	commit)
+		update
+		shift
+		commit "$@"
+		;;
+	reset)
+		reset
+		;;
+	checkout)
+		shift
+		checkout "$@"
+		;;
+	log)
+		shift
+		log "$@"
+		;;
+	help)
+		echo "Usage: $0 {update|commit|reset|checkout|log}"
+		echo ""
+		printf "%5s %-10s %s\n" '' update 获取最新内容到本地分支
+		printf "%5s %-10s %s\n" '' commit 记录变更到版本库并更新远程引用和相关的对象
+		printf "%5s %-10s %s\n" '' reset  撤销提交记录到指定状态
+		printf "%5s %-10s %s\n" '' checkout 检出一个分支或路径到工作区
+		printf "%5s %-10s %s\n" '' log 显示提交日志
+		echo ""
+		printf "$GREEN"
+		echo "以下为GIT默认用法"
+		printf "$OFF"
+		git help
+		exit 1;;
+	*)
+		git "$@"
+esac
