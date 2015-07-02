@@ -86,7 +86,7 @@ function exec
 function reset
 {
 	echo "以下为最近10次提交历史"
-	git log -n 10 --pretty=format:"%h \"%s\"(%cn)" | while read line
+	git log -n 10 --pretty=format:"%h \"%s\" (%cn) %C(yellow)%d%Creset" | while read line
 	do
 		echo $line
 	done
@@ -118,7 +118,7 @@ function reset
 function log
 {
 	params=$(echo "$@"|sed s/\"/\\\"/g)
-	exec git log --graph --pretty=format:"'%Cred%h%Creset%C(yellow)%d%Creset%nAuthor:%cn<%ce>%nDate:%cd%Cblue(%cr)%Creset%n%nSubject:%Cgreen%s%Creset%n'" --name-status "$params"
+	exec git log --graph --pretty=format:"%Cred%h%Creset%C(yellow)%d%Creset%nAuthor:%cn<%ce>%nDate:%cd%Cblue(%cr)%Creset%n%nSubject:%Cgreen%s%Creset%n" --name-status "$params"
 }
 
 # 切换分支
