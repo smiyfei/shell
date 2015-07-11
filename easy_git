@@ -106,7 +106,7 @@ function reset
 		reset
 	else
 		read -p "要保留最新的文件内容吗？(Y): " file
-		if [ "$file" = "Y" -o "$file" = "y" ];then
+		if [ "$file" = "Y" -o "$file" = "y" -o "$file" = "" ];then
 			exec git reset $realComId
 		else
 			exec git reset --hard $realComId
@@ -143,6 +143,13 @@ function checkout
 	fi
 }
 
+# 恢复数据
+function sync
+{
+	exec git rm --cached -f -r -- $@
+	exec git checkout HEAD -- $@
+}
+
 # 重构参数
 params=''
 if [ "$#" != "0" ];then
@@ -175,6 +182,10 @@ case $action in
 		cmd=$(echo log $params)
 		eval $cmd
 		;;
+	sync)
+		cmd=$(echo sync $params)
+		eval $cmd
+		;;
 	help)
 		echo "Usage: $0 {update|commit|reset|checkout|log}"
 		echo ""
@@ -183,6 +194,7 @@ case $action in
 		printf "%5s %-10s %s\n" '' reset  撤销提交记录到指定状态
 		printf "%5s %-10s %s\n" '' checkout 检出一个分支或路径到工作区
 		printf "%5s %-10s %s\n" '' log 显示提交日志
+		printf "%5s %-10s %s\n" '' sync 恢复数据为最新版
 		echo ""
 		printf "$GREEN"
 		echo "以下为GIT默认用法"
