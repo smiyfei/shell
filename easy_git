@@ -164,7 +164,6 @@ case $action in
 		update
 		;;
 	commit)
-		update
 		cmd=$(echo checkCommit $params)
 		eval $cmd
 		cmd=$(echo git commit $params)
