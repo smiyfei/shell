@@ -149,6 +149,11 @@ function sync
 	exec git rm --cached -f -r -- $@
 	exec git checkout HEAD -- $@
 }
+ver=$(git --version|awk '{print $3}'|awk -F '.' '{print $1}')
+if [ "$ver" = "1" ];then
+	echo "请升级git到2.0以上版本"
+	exit
+fi
 
 # 重构参数
 params=''
