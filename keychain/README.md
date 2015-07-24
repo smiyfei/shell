@@ -1,6 +1,6 @@
 # keychain 解决pub不存在时可以继续使用
 
-diff /usr/bin/keychain /usr/bin/keychain.new
+diff /usr/bin/keychain /usr/bin/keychain2
 943,944c943,947
 <                               warn "Cannot find public key for $1."
 <                               return 1
