@@ -848,7 +848,15 @@ extract_fingerprints() {
 			*\ @(SHA256|MD5):[0-9a-zA-Z\+\/=]*)
 				# The new OpenSSH 6.8+ format,
 				#   1024 SHA256:mVPwvezndPv/ARoIadVY98vAC0g+P/5633yTC4d/wXE /home/barney/.ssh/id_dsa (DSA)
-				echo "$ef_line" | cut -f2 -d' '
+				########for lost pub key########
+				sf_filename=`echo "$ef_line"  | cut -f3 -d' '`
+				lsf_filename="$sf_filename.pub"
+				if [ ! -f $lsf_filename ]; then
+					echo $sf_filename
+				else
+					echo "$ef_line" | cut -f2 -d' '
+				fi
+				########/for lost pub key########
 				;;
 			*)
 				# Fall back to filename.  Note that commercial ssh is handled
@@ -941,8 +949,8 @@ ssh_f() {
 			lsf_filename=`echo "$sf_filename" | sed 's/\.[^\.]*$//'`.pub
 			if [ ! -f "$lsf_filename" ]; then
 				########for lost pub key########
-				warn "Cannot find public key for $1 ."
-				basename "$sf_filename"
+				warn "Cannot find public key for $1"
+				echo "$sf_filename"
 				return 0
 				########/for lost pub key########
 			fi
