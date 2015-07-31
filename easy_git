@@ -146,6 +146,10 @@ function checkout
 # 恢复数据
 function sync
 {
+	git status -s $@|awk '{print $2}'  | while read line 
+	do
+		exec rm -f $line
+	done
 	exec git rm --cached -f -r -- $@
 	exec git checkout HEAD -- $@
 }
