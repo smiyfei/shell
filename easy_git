@@ -21,9 +21,25 @@ GREEN='\e[1;32m'
 RED='\e[1;31m'
 readonly OFF GREEN RED
 
+function error
+{
+	printf "$RED"
+	echo $@
+	printf "$OFF"
+}
+function isDev
+{
+	branch=$(git branch|grep '*'|awk '{print $2}')
+	if [ "$branch" != "dev" ];then
+		error "当前非dev分支"
+		exit
+	fi
+}
+
 # 更新文件
 function update
 {
+	isDev
 	stash=$(git status -s |wc -l)
 	if [ "$stash" != "0" ]; then
 		exec git stash
@@ -40,16 +56,12 @@ function checkCommit
 {
 	info=$(commitMsg "$@")
 	if [ "$info" = "" ];then
-		printf "$RED"
-		echo "请填写提交描述~"
-		printf "$OFF"
+		error "请填写提交描述~"
 		exit
 	elif echo $info| grep '#[0-9]\{1,9\}' > /dev/null; then
 		return
 	else
-		printf "$RED"
-		echo "提交描述里要保含分支号哦~"
-		printf "$OFF"
+		error "提交描述里要保含分支号哦~"
 		exit
 	fi
 }
@@ -100,9 +112,7 @@ function reset
 		fi
 	done
 	if [ "$realComId" = "" ]; then
-		printf "$RED"
-		echo "没有找到对应的提交ID，请重新选择"
-		printf "$OFF"
+		error "没有找到对应的提交ID，请重新选择"
 		reset
 	else
 		read -p "要保留最新的文件内容吗？(Y): " file
@@ -124,6 +134,7 @@ function log
 # 切换分支
 function checkout
 {
+	isDev
 	if [ "$#" = "1" -a "$1" != "--" ];then
 		new="1"
 		for line in $(git branch)
@@ -153,9 +164,16 @@ function sync
 	exec git rm --cached -f -r -- $@
 	exec git checkout HEAD -- $@
 }
+
+uid=`id -u`
+if [ "$uid" = "0" ];then
+	error "不能使用root~"
+	exit
+fi
+
 ver=$(git --version|awk '{print $3}'|awk -F '.' '{print $1}')
 if [ "$ver" = "1" ];then
-	echo "请升级git到2.0以上版本"
+	error "请升级git到2.0以上版本(https://git-scm.com/download/)"
 	exit
 fi
 
@@ -168,6 +186,7 @@ if [ "$#" != "0" ];then
 		params=$params" \"$tmp\""
 	done
 fi
+echo "git $action $params" >> /tmp/c
 case $action in
 	update)
 		update
