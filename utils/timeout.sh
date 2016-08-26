@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# authors: liminggui
 # 示例
 # 执行test.sh最长3秒, 可获取错误码
+# 注意:参数内不能含有空格
 # ./timeout.sh 3 ./test.sh
 
 # 超时时间
@@ -48,7 +50,7 @@ timeout()
     ret=$?
 
     # 程序正常时,杀死监控
-    kill $sleeppid > /dev/null 2>&1
+    killpids $sleeppid > /dev/null 2>&1
     return $ret
 }
 
